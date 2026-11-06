@@ -1,0 +1,8 @@
+# Generated and dependency artifacts are not source inputs for Semgrep Code.
+node_modules/
+dist/
+
+# Local test reports and workflow scratch data.
+playwright-report/
+test-results/
+coverage/
