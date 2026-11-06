@@ -13,7 +13,7 @@
 React、TypeScript strict、Vite、React Router、Tailwind CSS、ESLint、Prettier、Vitest、Playwright、Husky、lint-staged。
 
 ```bash
-npm ci --legacy-peer-deps
+npm ci
 npm run dev
 npm run lint
 npm test

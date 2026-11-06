@@ -7,7 +7,7 @@
 需求：Node.js 22.12+、npm 10+。
 
 ```bash
-npm ci --legacy-peer-deps
+npm ci
 npm run dev
 ```
 
