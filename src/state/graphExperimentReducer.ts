@@ -12,7 +12,7 @@ export type ExperimentState = {
 export function initialState(config = defaultConfig): ExperimentState {
   return {
     graph: generateGraph(config.count, config.view, config.source),
-    renderer: 'reactflow',
+    renderer: 'canvas',
     selected: null,
     focused: false,
     token: 0,
