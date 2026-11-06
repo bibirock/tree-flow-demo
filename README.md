@@ -46,4 +46,31 @@ npm run test:e2e
 
 ## CI/CD
 
-推送與 PR 會執行 Semgrep 程式碼掃描、ESLint、格式檢查、單元測試、Playwright 無頭 E2E、正式建置及 Pages 子目錄驗證。主分支所有檢查通過後，才自動部署至 GitHub Pages。掃描結果可在 Actions 與 Semgrep 平台查看。
+流程定義於 `.github/workflows/pages.yml`，在推送至 `master`、對 `master` 的 PR 或手動觸發時執行。預設權限為唯讀 `contents: read`，同一分支的重複執行會取消較舊者；所有第三方 Actions 與 Semgrep 映像皆釘選至固定 commit／digest，避免可變標籤帶來的供應鏈風險。
+
+### 流程概覽
+
+| 階段       | 內容                                                                                   |
+| ---------- | -------------------------------------------------------------------------------------- |
+| `semgrep`  | 以 `semgrep ci` 掃描機密、依賴供應鏈與程式碼；有阻擋等級的發現時流程失敗               |
+| `validate` | `npm ci`、格式檢查、ESLint、單元測試、Playwright 無頭 E2E、正式建置及 Pages 子路徑驗證 |
+| `deploy`   | 僅在 `master` 推送且 `semgrep` 與 `validate` 都通過後，才部署至 GitHub Pages           |
+
+- `semgrep` 與 `validate` 並行執行，PR 只做檢查，不會上傳或部署。
+- Pages 建置使用 `--base=/<repo 名稱>/`，並以 `playwright.pages.config.ts` 對建置結果再跑一次測試，確認子路徑下資源與路由可用。
+- E2E 失敗時會保留 `playwright-report/` 與 `test-results/` 為 artifact（7 天）。
+- `.semgrepignore` 排除 `node_modules/`、`dist/` 與測試報告等非原始碼輸入。
+
+### 安全性掃描結果
+
+下圖為 `master` 分支的 Semgrep 完整掃描（Nov 6，耗時 38 秒，Semgrep 1.176.1，exit code 0）：
+
+![Semgrep 完整掃描結果](docs/semgrep-scan.png)
+
+| 類別         | 發現數 |
+| ------------ | ------ |
+| Secrets      | 0      |
+| Supply Chain | 2      |
+| Code         | 0      |
+
+掃描狀態為「Scan completed with no blocking findings」：沒有機密外洩與程式碼問題。
