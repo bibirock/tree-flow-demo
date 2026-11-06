@@ -1,0 +1,22 @@
+import { test, expect } from '@playwright/test';
+test('共用 layout 切換頁面並高亮導覽，測試頁不顯示量測區', async ({ page }) => {
+  await page.goto('/');
+  const nav = page.getByRole('navigation', { name: '頁面導覽' });
+  const comparison = nav.getByRole('link', { name: '圖形渲染比較', exact: true });
+  const fallback = nav.getByRole('link', { name: '錯誤回退測試', exact: true });
+  await expect(comparison).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('.workspace')).toHaveCount(1);
+  await fallback.click();
+  await expect(page).toHaveURL(/\/fallback-test$/);
+  await expect(fallback).toHaveAttribute('aria-current', 'page');
+  await expect(fallback).toHaveClass(/active/);
+  await expect(comparison).not.toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('.workspace')).toHaveCount(1);
+  await expect(page.locator('.metrics')).toHaveCount(0);
+  await expect(page.locator('.results')).toHaveCount(0);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await comparison.click();
+  await expect(comparison).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('.metrics')).toHaveCount(1);
+  await expect(page.locator('.results')).toHaveCount(1);
+});
