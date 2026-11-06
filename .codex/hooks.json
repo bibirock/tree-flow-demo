@@ -1,0 +1,18 @@
+{
+  "description": "每次 Codex 修改後檢查專案的變動程式檔；內容相同時略過重複檢查。",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash|apply_patch|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/lint-after-edit.mjs\"",
+            "timeout": 60,
+            "statusMessage": "檢查變動檔案的 ESLint 規則"
+          }
+        ]
+      }
+    ]
+  }
+}
