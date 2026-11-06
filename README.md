@@ -2,6 +2,8 @@
 
 我透過重寫渲染器來改善整體渲染速度，並比較 React Flow 與自繪 Canvas 的表現。開發過程使用已建立的 E2E 與單元測試約束 AI 產出，確認替換渲染器後仍符合預期功能。展示使用相同的合成資料與佈局，預設載入一萬個節點。
 
+[線上展示](https://bibirock.github.io/tree-flow-demo/)
+
 ## 啟動
 
 需求：Node.js 22.12+、npm 10+。
@@ -41,3 +43,7 @@ npm run build
 npx playwright install chromium
 npm run test:e2e
 ```
+
+## CI/CD
+
+推送與 PR 會執行 Semgrep 程式碼掃描、ESLint、格式檢查、單元測試、Playwright 無頭 E2E、正式建置及 Pages 子目錄驗證。主分支所有檢查通過後，才自動部署至 GitHub Pages。掃描結果可在 Actions 與 Semgrep 平台查看。

@@ -1,0 +1,75 @@
+name: Validate and deploy Pages
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  semgrep:
+    name: Semgrep security scan
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep@sha256:34ab619bf1391a24bfda3f05debd0d8a6ce3093c2d5f9d39cfc00f83c1397823
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan and enforce blocking findings
+        run: semgrep ci --no-suppress-errors
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Build for repository Pages
+        run: npm run build -- --base=/${{ github.event.repository.name }}/
+      - name: Test built Pages site
+        run: npx playwright test --config playwright.pages.config.ts
+      - name: Retain failed browser tests
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failures
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+      - name: Upload site
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
+        with:
+          path: dist
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    needs: [validate, semgrep]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
